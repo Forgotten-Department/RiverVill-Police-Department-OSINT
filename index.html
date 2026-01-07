@@ -2,236 +2,228 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RiverVill PD - OSINT Terminal</title>
+    <title>RiverVill PD - OSINT System</title>
     <style>
-        /* --- СТИЛИ (CSS) --- */
-        
-        /* 1. Основа: Черный фон, шрифт терминала */
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #000;
-            color: #33ff33; /* Классический терминальный зеленый */
-            font-family: 'Courier New', Courier, monospace;
-            overflow: hidden; /* Чтобы не было полос прокрутки у самого окна браузера */
-            height: 100vh;
-            user-select: none; /* Нельзя выделять текст, как в старых интерфейсах */
+        /* --- БАЗОВЫЕ СТИЛИ И ЭФФЕКТЫ --- */
+        :root {
+            --term-green: #33ff33;
+            --monitor-bg: #1a1a1a; /* Тёмно-серый фон монитора */
         }
 
-        /* 2. Эффект ЭЛТ-монитора (CRT Effect) */
-        .crt-overlay {
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            background: #050505;
+            color: var(--term-green);
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+
+        /* Анимация мерцания всего экрана */
+        @keyframes light-flicker {
+            0% { opacity: 0.95; }
+            5% { opacity: 0.85; }
+            10% { opacity: 0.95; }
+            100% { opacity: 1; }
+        }
+        .flicker-effect { animation: light-flicker 4s infinite; }
+
+        /* Эффект старого монитора (сетка и шум) */
+        .crt::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            z-index: 2000;
+            background-size: 100% 3px, 3px 100%;
+            pointer-events: none;
+        }
+
+        /* --- ЭКРАН ВЫБОРА --- */
+        #boot-screen {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none; /* Чтобы можно было кликать сквозь этот слой */
-            z-index: 1000;
+            width: 100%; height: 100%;
+            background: #000;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 3000;
         }
 
-        .screen-flicker {
-            animation: flicker 0.15s infinite;
-        }
-
-        @keyframes flicker {
-            0% { opacity: 0.97; }
-            50% { opacity: 1; }
-            100% { opacity: 0.98; }
-        }
-
-        /* Текстовое свечение */
-        .glow {
-            text-shadow: 0 0 5px #33ff33, 0 0 10px #33ff33;
-        }
-
-        /* 3. Рабочий стол */
-        #desktop {
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        /* Иконки */
-        .icon-container {
-            width: 80px;
+        .boot-menu {
+            border: 2px solid var(--term-green);
+            padding: 30px;
             text-align: center;
+        }
+
+        .boot-btn {
+            background: transparent;
+            color: var(--term-green);
+            border: 1px solid var(--term-green);
+            padding: 10px 20px;
+            margin: 10px;
             cursor: pointer;
-            border: 1px solid transparent;
-            padding: 5px;
+            font-family: inherit;
         }
 
-        .icon-container:hover {
-            border: 1px dashed #33ff33;
-            background-color: rgba(51, 255, 51, 0.1);
+        .boot-btn:hover {
+            background: var(--term-green);
+            color: #000;
         }
 
-        .icon-img {
-            font-size: 40px;
-            margin-bottom: 5px;
+        /* --- РАБОЧИЙ СТОЛ --- */
+        #os-interface {
+            display: none; /* Появится после выбора */
+            height: 100%;
+            background: var(--monitor-bg);
+            position: relative;
         }
 
-        .icon-label {
-            font-size: 12px;
+        #desktop {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, 100px);
+            grid-gap: 20px;
+            padding: 40px;
         }
 
-        /* 4. Окна (Почта, Архив и т.д.) */
+        .icon {
+            display: flex; flex-direction: column;
+            align-items: center; cursor: pointer;
+            text-shadow: 0 0 5px var(--term-green);
+        }
+
+        .icon:hover { background: rgba(51, 255, 51, 0.1); }
+
+        /* --- ОКНА --- */
         .window {
             position: absolute;
-            top: 10%;
-            left: 20%;
-            width: 600px;
-            background-color: #000;
-            border: 2px solid #33ff33;
-            box-shadow: 0 0 15px rgba(51, 255, 51, 0.2);
-            display: none; /* Скрыто по умолчанию */
+            top: 50px; left: 100px;
+            width: 500px;
+            background: #000;
+            border: 2px solid var(--term-green);
+            display: none;
             flex-direction: column;
-            z-index: 10;
+            box-shadow: 10px 10px 0px rgba(0,0,0,0.5);
+            z-index: 100;
         }
 
         .title-bar {
-            background-color: #33ff33;
+            background: var(--term-green);
             color: #000;
-            padding: 5px 10px;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .close-btn {
-            background: #000;
-            color: #33ff33;
-            border: 1px solid #000;
-            cursor: pointer;
+            padding: 5px;
+            display: flex; justify-content: space-between;
             font-weight: bold;
         }
 
-        .close-btn:hover {
-            background: #33ff33;
-            color: #000;
-        }
+        .content { padding: 15px; overflow-y: auto; max-height: 300px; }
 
-        .window-content {
-            padding: 20px;
-            overflow-y: auto;
-            max-height: 400px;
-        }
-
-        /* Стиль самого письма */
-        .email-header {
-            border-bottom: 1px dashed #33ff33;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-        }
-
-        .email-body {
-            line-height: 1.5;
-            font-size: 14px;
-        }
-
-        /* Уведомление */
-        .notification {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            border: 2px solid #33ff33;
+        .search-box {
+            width: 90%;
             background: #000;
-            padding: 10px;
-            display: none;
-            z-index: 50;
+            border: 1px solid var(--term-green);
+            color: var(--term-green);
+            padding: 5px;
+            margin-bottom: 10px;
         }
 
     </style>
 </head>
-<body class="screen-flicker">
+<body class="crt flicker-effect">
 
-    <div class="crt-overlay"></div>
-
-    <div style="border-bottom: 2px solid #33ff33; padding: 5px 10px; display: flex; justify-content: space-between;">
-        <span>RIVERVILL PD // OSINT v.1.0</span>
-        <span id="clock">00:00:00</span>
-    </div>
-
-    <div id="desktop">
-        <div class="icon-container" onclick="openWindow('mail-window')">
-            <div class="icon-img">✉️</div> <div class="icon-label glow">MAIL_CLIENT</div>
-        </div>
-
-        <div class="icon-container">
-            <div class="icon-img">🗄️</div>
-            <div class="icon-label">ARCHIVE</div>
+    <div id="boot-screen">
+        <div class="boot-menu">
+            <h1 id="boot-title">RIVERVILL PD SYSTEM</h1>
+            <p>SELECT MODE:</p>
+            <button class="boot-btn" onclick="setLang('ru')">РУССКИЙ</button>
+            <button class="boot-btn" onclick="setLang('en')">ENGLISH</button>
+            <hr>
+            <button class="boot-btn" onclick="startOS()">START OSINT_QUEST</button>
+            <button class="boot-btn">OPEN ARCHIVE ONLY</button>
         </div>
     </div>
 
-    <div id="mail-window" class="window">
-        <div class="title-bar">
-            <span>SECURE MAIL // INBOX</span>
-            <button class="close-btn" onclick="closeWindow('mail-window')">[X]</button>
+    <div id="os-interface">
+        <div style="background: var(--term-green); color: #000; padding: 2px 10px; font-size: 12px;">
+            STATION: RV-04 | AGENT: CONOR | STATUS: ONLINE
         </div>
-        <div class="window-content">
-            <div class="email-header">
-                <p><strong>FROM:</strong> COMMANDER [REDACTED]</p>
-                <p><strong>TO:</strong> AGENT CONOR</p>
-                <p><strong>SUBJECT:</strong> ДЕЛО №404 - ВВОДНЫЙ ИНСТРУКТАЖ</p>
+
+        <div id="desktop">
+            <div class="icon" onclick="openWin('mail-win')">
+                <span>✉️</span><span>MAIL</span>
             </div>
-            <div class="email-body">
-                <p>Здравствуй, новичок.</p>
-                <p>Перед собой ты видишь рабочий стол, верно?</p>
-                <p>Если вкратце, как и полагается командиру, я объясню твою задачу и кейс, который ты должен расследовать. Твоя цель — разузнать как можно больше о нашей жертве или же враге, и в итоге его найти...</p>
-                <p>...пока он не нашел тебя.</p>
-                <p>Ха-ха. Но если тебя не пугать, то такое правда может случиться.</p>
-                <p>В общем, если будут поступать новые указания или директивы, то прочитать ты их сможешь здесь. У тебя еще уведомление появится.</p>
-                <br>
-                <p>До встречи, дорогой агент Конор.</p>
-                <p><em>-- Конец сообщения --</em></p>
+            <div class="icon" onclick="openWin('archive-win')">
+                <span>🗄️</span><span>ARCHIVE</span>
+            </div>
+            <div class="icon">
+                <span>🛡️</span><span>NETWORK</span>
+            </div>
+            <div class="icon">
+                <span>👣</span><span>LOGOUT</span>
             </div>
         </div>
-    </div>
 
-    <div id="notification-area" class="notification glow">
-        ! НОВОЕ СООБЩЕНИЕ !
+        <div id="mail-win" class="window">
+            <div class="title-bar"><span>MAIL CLIENT</span><span onclick="closeWin('mail-win')" style="cursor:pointer">[X]</span></div>
+            <div class="content" id="mail-text">
+                </div>
+        </div>
+
+        <div id="archive-win" class="window">
+            <div class="title-bar"><span>RIVERVILL_ARCHIVE</span><span onclick="closeWin('archive-win')" style="cursor:pointer">[X]</span></div>
+            <div class="content">
+                <input type="text" class="search-box" placeholder="Search file..." id="archive-search" onkeyup="searchArchive()">
+                <div id="file-list">
+                    <div style="cursor:pointer; text-decoration: underline;" onclick="openFile('lisa')">> Lisa's case.doc</div>
+                </div>
+                <hr>
+                <div id="file-content"></div>
+            </div>
+        </div>
     </div>
 
     <script>
-        // --- ЛОГИКА (JS) ---
+        let lang = 'ru';
 
-        // 1. Часы в углу
-        function updateClock() {
-            const now = new Date();
-            document.getElementById('clock').innerText = now.toLocaleTimeString();
+        const texts = {
+            ru: {
+                mail: "Здравствуй, новичок. Перед тобой рабочий стол. Твоя цель — разузнать как можно больше о нашей жертве или враге... пока он не нашел тебя (хаха).",
+                lisa_title: "ДЕЛО: ЛИЗА СИН",
+                lisa_body: "Здравствуйте, агент Конор! Мы хотим ввести вас в курс дела... Ваша цель — Лиза Син, 24 года, ранее проживала на Гавайях. Она проходила тесты в лаборатории X-Network, после чего бесследно пропала... Ходят слухи, что она жива и забирает чужие жизни. Будь осторожен, Конор, лады?"
+            },
+            en: {
+                mail: "Hello, rookie. You see the desktop. Your goal is to find out as much as possible about our victim or enemy... before he finds you (haha).",
+                lisa_title: "CASE: LISA SIN",
+                lisa_body: "Hello, Agent Conor! We want to bring you up to speed... Your target is Lisa Sin, 24 years old, formerly of Hawaii. She was undergoing tests at X-Network labs when she vanished... Rumor has it she's alive and taking lives. Be careful, Conor, okay?"
+            }
+        };
+
+        function setLang(l) {
+            lang = l;
+            alert("Language set to: " + l);
         }
-        setInterval(updateClock, 1000);
-        updateClock();
 
-        // 2. Открытие окон
-        function openWindow(id) {
-            const win = document.getElementById(id);
-            win.style.display = 'flex';
-            
-            // Если открыли почту, скрываем уведомление (если оно было)
-            if(id === 'mail-window') {
-                document.getElementById('notification-area').style.display = 'none';
+        function startOS() {
+            document.getElementById('boot-screen').style.display = 'none';
+            document.getElementById('os-interface').style.display = 'block';
+            document.getElementById('mail-text').innerText = texts[lang].mail;
+        }
+
+        function openWin(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeWin(id) { document.getElementById(id).style.display = 'none'; }
+
+        function openFile(file) {
+            const display = document.getElementById('file-content');
+            if(file === 'lisa') {
+                display.innerHTML = `<h3>${texts[lang].lisa_title}</h3><p>${texts[lang].lisa_body}</p>`;
             }
         }
 
-        // 3. Закрытие окон
-        function closeWindow(id) {
-            document.getElementById(id).style.display = 'none';
+        function searchArchive() {
+            let input = document.getElementById('archive-search').value.toLowerCase();
+            let list = document.getElementById('file-list');
+            // В будущем здесь будет логика поиска
         }
-
-        // 4. Имитация прихода уведомления через 3 секунды после запуска
-        setTimeout(() => {
-            const notif = document.getElementById('notification-area');
-            notif.style.display = 'block';
-            
-            // Простой звук "бип" (опционально, браузеры могут блокировать авто-звук)
-            // Но мы пока сделаем только визуально
-        }, 3000);
-
     </script>
 </body>
 </html>

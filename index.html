@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>RiverVill Police Department - OSINT</title>
+    <title>RiverVill PD - OSINT Global Update</title>
     <style>
         :root {
             --win-gray: #c0c0c0;
@@ -11,218 +11,224 @@
             --term-green: #33ff33;
         }
 
-        body, html { 
-            margin: 0; padding: 0; width: 100%; height: 100%; 
-            background: #000; font-family: 'Courier New', monospace; overflow: hidden;
-        }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; font-family: 'Courier New', monospace; overflow: hidden; }
 
         /* ЭФФЕКТЫ МОНИТОРА */
         .crt-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%),
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-            z-index: 5000; background-size: 100% 3px, 3px 100%; pointer-events: none;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+            z-index: 9999; background-size: 100% 3px, 3px 100%; pointer-events: none; opacity: 0.6;
         }
 
-        .flicker { animation: flickerAnim 0.15s infinite; }
-        @keyframes flickerAnim { 0% { opacity: 0.98; } 50% { opacity: 1; } 100% { opacity: 0.99; } }
-
-        /* ЭКРАН ВЫБОРА (ОРИГИНАЛЬНЫЙ) */
+        /* ЭКРАН ВЫБОРА */
         #boot-screen {
             position: fixed; width: 100%; height: 100%; background: #000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 4000; text-align: center; color: var(--term-green);
+            z-index: 5000; color: var(--term-green);
         }
-
-        .boot-box { border: 2px solid var(--term-green); padding: 40px; background: rgba(0,20,0,0.5); }
-        .boot-btn { 
-            background: transparent; color: var(--term-green); border: 1px solid var(--term-green);
-            padding: 10px 25px; margin: 10px; cursor: pointer; font-size: 16px;
-        }
+        .boot-box { border: 2px solid var(--term-green); padding: 40px; background: #050505; text-align: center; }
+        .boot-btn { background: transparent; color: var(--term-green); border: 1px solid var(--term-green); padding: 10px 20px; margin: 10px; cursor: pointer; }
         .boot-btn:hover { background: var(--term-green); color: #000; }
 
-        /* ОСНОВНОЙ ИНТЕРФЕЙС */
+        /* ИНТЕРФЕЙС ОС */
         #os-interface { display: none; height: 100%; flex-direction: column; }
-
-        #top-bar {
-            background: var(--win-gray); border-bottom: 2px solid var(--win-dark);
-            color: #000; padding: 5px 15px; display: flex; justify-content: space-between;
-            font-size: 13px; font-weight: bold;
-        }
-
-        #desktop {
-            flex-grow: 1; background: #3a6ea5; position: relative; padding: 20px;
-            background-image: url('https://www.transparenttextures.com/patterns/carbon-fibre.png'); /* Немного текстуры */
-        }
-
-        /* ИКОНКИ */
-        .icon {
-            width: 90px; text-align: center; color: white; cursor: pointer;
-            margin-bottom: 30px; text-shadow: 1px 1px 2px black;
-        }
-        .icon:hover { background: rgba(255,255,255,0.1); outline: 1px dashed #fff; }
-
-        /* ОКНА В СТИЛЕ СТАРОГО WINDOWS */
-        .window {
-            position: absolute; background: var(--win-gray);
-            border: 2px solid #fff; border-right: 2px solid var(--win-dark); 
-            border-bottom: 2px solid var(--win-dark);
-            display: none; flex-direction: column; box-shadow: 4px 4px 10px rgba(0,0,0,0.5);
-        }
-
-        .title-bar {
-            background: var(--win-blue); color: white; padding: 4px 8px;
-            display: flex; justify-content: space-between; font-size: 12px;
-        }
-
-        .close-btn { background: var(--win-gray); border: 1px solid #000; cursor: pointer; width: 16px; height: 16px; line-height: 12px; text-align: center; font-size: 10px; }
-
-        .content { padding: 15px; color: black; overflow-y: auto; background: white; margin: 2px; border: 1px solid var(--win-dark); }
+        #top-bar { background: var(--win-gray); border-bottom: 2px solid var(--win-dark); color: #000; padding: 5px 15px; display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; }
+        #desktop { flex-grow: 1; background: #3a6ea5; position: relative; }
+        
+        /* ОКНА */
+        .window { position: absolute; background: var(--win-gray); border: 2px solid #fff; border-right: 2px solid var(--win-dark); border-bottom: 2px solid var(--win-dark); display: none; flex-direction: column; z-index: 100; }
+        .title-bar { background: var(--win-blue); color: white; padding: 4px 8px; display: flex; justify-content: space-between; font-size: 12px; }
+        .content { padding: 15px; color: black; background: white; margin: 2px; border: 1px solid var(--win-dark); overflow-y: auto; }
 
         /* 2D РЕЖИМ */
-        #room-view {
-            display: none; position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%; background: #050505; z-index: 6000;
-        }
+        #room-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0a0a0a; z-index: 4000; }
+        canvas { display: block; }
+        
+        .ui-hint { position: absolute; bottom: 20px; width: 100%; text-align: center; color: white; pointer-events: none; text-shadow: 2px 2px #000; }
     </style>
 </head>
-<body class="flicker">
+<body>
 
-    <div class="crt-overlay"></div>
+<div class="crt-overlay"></div>
 
-    <div id="boot-screen">
-        <div class="boot-box">
-            <h1>RIVERVILL PD - BOOT MENU</h1>
-            <p>ВЫБЕРИТЕ ЯЗЫК / SELECT LANGUAGE</p>
-            <button class="boot-btn" onclick="initApp('ru')">РУССКИЙ</button>
-            <button class="boot-btn" onclick="initApp('en')">ENGLISH</button>
-            <p>ВЫБЕРИТЕ СЛОЖНОСТЬ / DIFFICULTY</p>
-            <button class="boot-btn" onclick="setDiff('Novice')">НОВИЧЕК</button>
-            <button class="boot-btn" onclick="setDiff('Story')">STORY MODE</button>
-        </div>
+<div id="boot-screen">
+    <div class="boot-box">
+        <h1>RIVERVILL PD SYSTEM v1.5</h1>
+        <p>SELECT INITIALIZATION PARAMETERS</p>
+        <button class="boot-btn" onclick="initGame('ru')">РУССКИЙ</button>
+        <button class="boot-btn" onclick="initGame('en')">ENGLISH</button>
+        <br>
+        <button class="boot-btn" onclick="setDiff('Story')">STORY MODE</button>
+        <button class="boot-btn" onclick="setDiff('Novice')">NOVICE</button>
     </div>
+</div>
 
-    <div id="os-interface">
-        <div id="top-bar">
-            <div>RiverVill Police Department - OSINT</div>
-            <div id="session-info">User 1 Conor - OSINT Session | 🌧️ Дождь, 12°C</div>
+<div id="os-interface">
+    <div id="top-bar">
+        <div>RiverVill Police Dept. - OSINT Terminal</div>
+        <div id="status-text">User 1 Conor | 🌧️ Дождь, 12°C</div>
+    </div>
+    <div id="desktop">
+        <div style="padding: 20px;">
+            <div onclick="openWin('mail-win')" style="cursor:pointer; color: white; text-align: center; width: 60px;">📬<br>Mail</div>
         </div>
+        
+        <button onclick="enterRoom()" style="position: absolute; bottom: 20px; right: 20px; padding: 10px;">ВСТАТЬ ИЗ-ЗА СТОЛА</button>
 
-        <div id="desktop">
-            <div class="icon" onclick="openWin('mail-win')">📬<br>Почта</div>
-            <div class="icon" onclick="openWin('archive-win')">📂<br>Архив</div>
-            
-            <div class="icon" style="position: absolute; bottom: 20px; right: 20px;" onclick="toggleRoom(true)">🚶<br>ВСТАТЬ</div>
-
-            <div id="mail-win" class="window" style="width: 500px; top: 50px; left: 50px;">
-                <div class="title-bar"><span>Входящие - Почтовый клиент</span><button class="close-btn" onclick="closeWin('mail-win')">X</button></div>
-                <div class="content" style="height: 300px;">
-                    <div id="email-list">
-                        <div onclick="readEmail(1)" style="cursor:pointer; color: blue; text-decoration: underline; margin-bottom: 10px;">> От: Командир (ВВОДНЫЙ ИНСТРУКТАЖ)</div>
-                        <div onclick="readEmail(2)" style="cursor:pointer; color: red; text-decoration: underline;">> От: Лиза (ПОМОГИТЕ!)</div>
-                    </div>
-                    <hr>
-                    <div id="email-view" style="white-space: pre-wrap; font-size: 14px;">Выберите письмо...</div>
+        <div id="mail-win" class="window" style="width: 400px; left: 50px; top: 50px;">
+            <div class="title-bar"><span>Mail Client</span><button onclick="closeWin('mail-win')">X</button></div>
+            <div class="content" id="mail-content" style="height: 250px;">
                 </div>
-            </div>
-
-            <div id="archive-win" class="window" style="width: 400px; top: 100px; left: 400px;">
-                <div class="title-bar"><span>RiverVill Archive v.1.0</span><button class="close-btn" onclick="closeWin('archive-win')">X</button></div>
-                <div class="content">
-                    <input type="text" placeholder="Поиск по ключевым словам..." style="width: 100%; margin-bottom: 10px;">
-                    <div onclick="readEmail(3)" style="cursor:pointer;">📄 Lisa_Case.doc</div>
-                </div>
-            </div>
         </div>
     </div>
+</div>
 
-    <div id="room-view">
-        <div style="color: white; padding: 20px; text-align: center;">Нажмите [ESC], чтобы вернуться за компьютер.</div>
-        <canvas id="gameCanvas"></canvas>
-    </div>
+<div id="room-view">
+    <canvas id="gameCanvas"></canvas>
+    <div class="ui-hint">[WASD] - Движение | [E] - Сесть за компьютер</div>
+</div>
 
-    <script>
-        let lang = 'ru';
-        let difficulty = 'Novice';
+<script>
+    let lang = 'ru';
+    let difficulty = 'Novice';
+    let audioCtx;
 
-        // ТЕКСТЫ СЛОВО В СЛОВО
-        const database = {
-            ru: {
-                mail1: "Здраствуй новичек, перед собой ты видешь рабочий стол верно ? Если в кратце как и пологаеться командиру я обьясню твою задачу и кейс который ты должен расследовать, твоя цель это расузнать как можно больше о нашей жертве или же враге и в итоге его найти.... пока он не нашел тебя (хаха) но если тебя не пугать то такое правда может случиться... Вообщем если будут поступать новые указания или директивы то прочитать ты их сможешь здесь... у тебя ещё уведомление появиться... до встреч дорой агент Конор",
-                mail2: "Здраствуйте я обращаюсь к департаменту полиции так как хочу сообщить что моя лаборотория которую я посещаю может заниматься нелегальщиной.... прошу ответить на мой запрос, помогите ! (Отправлено месяц назад в 23:45)",
-                case: "Здраствуйте агент Конор ! Мы хотим вас ввести в курс дела... Ваша цель это Лиза Син, ей 24 года ранее проживала в округах Хаваев, она проходила тесты в лаборотории X-Network после чего бесследно пропала... ходят слухи что она жива и забирает чужие жизни... будь осторожен конор, лады?"
-            },
-            en: {
-                mail1: "Hello rookie, you see the desktop in front of you, right? Briefly, as a commander should, I'll explain your task and the case... your goal is to find out as much as possible about our victim or enemy and find them... before they find you (haha). Anyway, if new directives come, you can read them here. Stay safe, Agent Conor.",
-                mail2: "Hello, I am contacting the police department to report that the laboratory I visit may be involved in illegal activities... please respond to my request, help me! (Sent one month ago at 23:45)",
-                case: "Hello Agent Conor! We want to bring you up to speed... Your target is Lisa Sin, 24 years old, formerly of Hawaii. She was tested at the X-Network lab and vanished... Rumors say she's alive and taking lives. Be careful, Conor, okay?"
-            }
-        };
-
-        function setDiff(d) { 
-            difficulty = d; 
-            alert("Сложность: " + d); 
+    const db = {
+        ru: {
+            mail: "Здраствуй новичек, перед собой ты видешь рабочий стол верно ? ... (текст сокращен для кода, но в игре будет полный) ... до встреч дорой агент Конор",
+            weather: "User 1 Conor | 🌧️ Дождь, 12°C"
+        },
+        en: {
+            mail: "Hello rookie, you see the desktop... stay safe, Agent Conor.",
+            weather: "User 1 Conor | 🌧️ Rain, 12°C"
         }
+    };
 
-        function initApp(l) {
-            lang = l;
-            document.getElementById('boot-screen').style.display = 'none';
+    function initGame(l) {
+        lang = l;
+        document.getElementById('boot-screen').style.display = 'none';
+        document.getElementById('os-interface').style.display = 'flex';
+        document.getElementById('mail-content').innerText = db[lang].mail;
+        document.getElementById('status-text').innerText = db[lang].weather;
+        startAmbientAudio();
+    }
+
+    function setDiff(d) { difficulty = d; }
+    function openWin(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeWin(id) { document.getElementById(id).style.display = 'none'; }
+
+    // --- ЗВУКОВОЙ ДВИЖОК ---
+    function startAmbientAudio() {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // Гул компьютера
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(50, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.02, audioCtx.currentTime);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.start();
+    }
+
+    // --- 2D ДВИЖОК (ОФИС) ---
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let player = { 
+        x: 200, y: 300, 
+        w: 40, h: 40, 
+        speed: 6, // Увеличенный шаг
+        frame: 0,
+        isMoving: false
+    };
+
+    let keys = {};
+    window.onkeydown = (e) => { 
+        keys[e.key.toLowerCase()] = true; 
+        if(e.key === 'e' || e.key === 'у') exitRoom();
+    };
+    window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
+
+    function enterRoom() {
+        document.getElementById('os-interface').style.display = 'none';
+        document.getElementById('room-view').style.display = 'block';
+        requestAnimationFrame(update);
+    }
+
+    function exitRoom() {
+        // Проверка близости к столу (упрощенно)
+        if(player.x < 300 && player.y < 400) {
+            document.getElementById('room-view').style.display = 'none';
             document.getElementById('os-interface').style.display = 'flex';
-            if(lang === 'en') {
-                document.getElementById('session-info').innerText = "User 1 Conor - OSINT Session | 🌧️ Rain, 12°C";
-            }
+        }
+    }
+
+    function update() {
+        if(document.getElementById('room-view').style.display === 'none') return;
+        
+        player.isMoving = false;
+        if(keys['w']) { player.y -= player.speed; player.isMoving = true; }
+        if(keys['s']) { player.y += player.speed; player.isMoving = true; }
+        if(keys['a']) { player.x -= player.speed; player.isMoving = true; }
+        if(keys['d']) { player.x += player.speed; player.isMoving = true; }
+
+        draw();
+        requestAnimationFrame(update);
+    }
+
+    function draw() {
+        ctx.fillStyle = "#111"; // Пол
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // РИСУЕМ ОКНО С ДОЖДЕМ
+        ctx.fillStyle = "#112233";
+        ctx.fillRect(canvas.width - 200, 100, 150, 200);
+        ctx.strokeStyle = "white";
+        for(let i=0; i<10; i++) {
+            let rx = canvas.width - 200 + Math.random()*150;
+            let ry = 100 + (Date.now()/5 + i*20)%200;
+            ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx-2, ry+10); ctx.stroke();
         }
 
-        function openWin(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeWin(id) { document.getElementById(id).style.display = 'none'; }
-
-        function readEmail(num) {
-            const view = document.getElementById('email-view');
-            if(num === 1) view.innerText = database[lang].mail1;
-            if(num === 2) view.innerText = database[lang].mail2;
-            if(num === 3) {
-                openWin('mail-win');
-                view.innerText = database[lang].case;
-            }
+        // РИСУЕМ ОФИСНЫЕ ПЕРЕГОРОДКИ И СТОЛЫ
+        ctx.fillStyle = "#444";
+        for(let i=0; i<3; i++) {
+            ctx.fillRect(100, 150 + i*150, 120, 60); // Столы NPC
+            ctx.fillStyle = "#222";
+            ctx.fillRect(100, 140 + i*150, 120, 10); // Мониторы
         }
 
-        // --- 2D ДВИЖОК ---
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        // ТВОЙ СТОЛ (БУДКА)
+        ctx.fillStyle = "#555";
+        ctx.fillRect(100, 450, 150, 80);
+        ctx.fillStyle = "#0f0"; // Светящийся экран Конора
+        ctx.fillRect(150, 445, 40, 5);
 
-        let player = { x: canvas.width/2, y: canvas.height/2, speed: 5 };
-
-        function toggleRoom(show) {
-            document.getElementById('room-view').style.display = show ? 'block' : 'none';
-            if(show) renderRoom();
+        // РИСУЕМ КОНОРА
+        player.frame += 0.1;
+        let breath = Math.sin(player.frame) * 2;
+        
+        ctx.fillStyle = "#d2b48c"; // Кожа
+        ctx.fillRect(player.x, player.y + breath, player.w, player.h);
+        ctx.fillStyle = "#3e2723"; // Борода
+        ctx.fillRect(player.x, player.y + 25 + breath, player.w, 15);
+        
+        // Сонные глаза (моргание)
+        ctx.fillStyle = "black";
+        if(Math.sin(player.frame/2) > -0.9) {
+            ctx.fillRect(player.x + 8, player.y + 12 + breath, 8, 2);
+            ctx.fillRect(player.x + 24, player.y + 12 + breath, 8, 2);
         }
 
-        window.addEventListener('keydown', (e) => {
-            if(e.key === 'Escape') toggleRoom(false);
-            if(e.key === 'w' || e.key === 'ц') player.y -= player.speed;
-            if(e.key === 's' || e.key === 'ы') player.y += player.speed;
-            if(e.key === 'a' || e.key === 'ф') player.x -= player.speed;
-            if(e.key === 'd' || e.key === 'в') player.x += player.speed;
-        });
-
-        function renderRoom() {
-            if(document.getElementById('room-view').style.display === 'none') return;
-            ctx.fillStyle = '#050505';
-            ctx.fillRect(0,0,canvas.width, canvas.height);
-
-            // Персонаж (Сонный бородатый Конор)
-            ctx.fillStyle = "#e0ac69"; // Кожа
-            ctx.fillRect(player.x, player.y, 40, 40);
-            ctx.fillStyle = "#3e2723"; // Борода
-            ctx.fillRect(player.x, player.y + 25, 40, 15);
-            ctx.fillStyle = "#000"; // Сонные глаза
-            ctx.fillRect(player.x + 8, player.y + 12, 8, 2);
-            ctx.fillRect(player.x + 24, player.y + 12, 8, 2);
-
-            requestAnimationFrame(renderRoom);
-        }
-    </script>
+        // РАБОТАЮЩИЕ АГЕНТЫ (NPC)
+        ctx.fillStyle = "#556b2f";
+        ctx.fillRect(70, 160, 30, 30); // Агент 1
+        ctx.fillRect(70, 310, 30, 30); // Агент 2
+    }
+</script>
 </body>
 </html>

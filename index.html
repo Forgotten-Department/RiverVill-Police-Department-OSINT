@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>RiverVill PD - OSINT System</title>
+    <title>RiverVill PD - Terminal 1.0.2</title>
     <style>
         :root {
             --win-gray: #c0c0c0;
@@ -13,7 +13,6 @@
 
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; font-family: 'Courier New', monospace; overflow: hidden; }
 
-        /* CRT ОВЕРЛЕЙ */
         .crt-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
@@ -21,37 +20,34 @@
             z-index: 9999; background-size: 100% 3px, 3px 100%; pointer-events: none; opacity: 0.5;
         }
 
-        /* ЭКРАН ВЫБОРА */
+        /* МЕНЮ ВЫБОРА */
         #boot-screen {
-            position: fixed; width: 100%; height: 100%; background: #000;
+            position: fixed; width: 100%; height: 100%; background: #050505;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             z-index: 5000; color: var(--term-green);
         }
-        .boot-box { border: 2px solid var(--term-green); padding: 40px; background: #050505; text-align: center; }
-        .boot-btn { background: transparent; color: var(--term-green); border: 1px solid var(--term-green); padding: 10px 20px; margin: 10px; cursor: pointer; font-family: inherit; }
-        .boot-btn:hover { background: var(--term-green); color: #000; }
+        .boot-box { border: 2px solid var(--term-green); padding: 40px; background: #000; text-align: center; }
+        .boot-btn { 
+            background: transparent; color: var(--term-green); border: 1px solid var(--term-green); 
+            padding: 10px 25px; margin: 10px; cursor: pointer; transition: 0.2s; font-family: inherit;
+        }
+        .boot-btn.selected { background: var(--term-green); color: #000; box-shadow: 0 0 15px var(--term-green); }
+        #start-btn { margin-top: 30px; display: none; border-width: 3px; }
 
         /* ИНТЕРФЕЙС ОС */
         #os-interface { display: none; height: 100%; flex-direction: column; }
         #top-bar { background: var(--win-gray); border-bottom: 2px solid var(--win-dark); color: #000; padding: 5px 15px; display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; }
         #desktop { flex-grow: 1; background: #3a6ea5; position: relative; }
         
-        /* ИКОНКИ */
-        .desktop-icon {
-            width: 80px; margin: 20px; text-align: center; color: white; cursor: pointer;
-            text-shadow: 1px 1px 2px black; font-size: 12px;
-        }
+        .desktop-icon { width: 80px; margin: 20px; text-align: center; color: white; cursor: pointer; text-shadow: 1px 1px 2px black; font-size: 12px; }
         .icon-pic { font-size: 40px; margin-bottom: 5px; display: block; }
 
-        /* ОКНА */
         .window { position: absolute; background: var(--win-gray); border: 2px solid #fff; border-right: 2px solid var(--win-dark); border-bottom: 2px solid var(--win-dark); display: none; flex-direction: column; z-index: 100; }
         .title-bar { background: var(--win-blue); color: white; padding: 4px 8px; display: flex; justify-content: space-between; font-size: 12px; }
-        .content { padding: 15px; color: black; background: white; margin: 2px; border: 1px solid var(--win-dark); overflow-y: auto; white-space: pre-wrap; font-size: 14px; line-height: 1.4; }
+        .content { padding: 15px; color: black; background: white; margin: 2px; border: 1px solid var(--win-dark); overflow-y: auto; white-space: pre-wrap; font-size: 14px; line-height: 1.5; }
 
-        /* 2D РЕЖИМ */
         #room-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 4000; }
         canvas { display: block; }
-        .ui-hint { position: absolute; bottom: 20px; width: 100%; text-align: center; color: white; pointer-events: none; text-shadow: 2px 2px #000; }
     </style>
 </head>
 <body>
@@ -60,96 +56,86 @@
 
 <div id="boot-screen">
     <div class="boot-box">
-        <h1>RIVERVILL PD - OSINT SESSION</h1>
-        <p>ВЫБЕРИТЕ ЯЗЫК / SELECT LANGUAGE</p>
-        <button class="boot-btn" onclick="initGame('ru')">РУССКИЙ</button>
-        <button class="boot-btn" onclick="initGame('en')">ENGLISH</button>
-        <p>СЛОЖНОСТЬ / DIFFICULTY</p>
-        <button class="boot-btn" onclick="setDiff('Story')">STORY MODE</button>
-        <button class="boot-btn" onclick="setDiff('Novice')">НОВИЧЕК</button>
+        <h1>RIVERVILL SYSTEM v2.2</h1>
+        <p>ВЫБЕРИТЕ ЯЗЫК</p>
+        <button class="boot-btn" id="lang-ru" onclick="selectLang('ru')">РУССКИЙ</button>
+        <button class="boot-btn" id="lang-en" onclick="selectLang('en')">ENGLISH</button>
+        <p>РЕЖИМ ПРИСУТСТВИЯ</p>
+        <button class="boot-btn" id="diff-novice" onclick="selectDiff('Novice')">ОБЫЧНЫЙ</button>
+        <button class="boot-btn" id="diff-story" onclick="selectDiff('Story')">ИСТОРИЯ</button>
+        <br>
+        <button class="boot-btn" id="start-btn" onclick="startGame()">ВОЙТИ В ПУСТОТУ</button>
     </div>
 </div>
 
 <div id="os-interface">
     <div id="top-bar">
-        <div>RiverVill Police Department - OSINT v1.7</div>
-        <div id="status-text">User 1 Conor | 🌧️ Дождь, 12°C</div>
+        <div>RVPD Terminal - User: Conor</div>
+        <div id="status-text">12°C | Снаружи всё спокойно...</div>
     </div>
     <div id="desktop">
         <div style="display: flex; flex-direction: column;">
-            <div class="desktop-icon" onclick="openWin('mail-win')">
-                <span class="icon-pic">📬</span><span>Почта</span>
-            </div>
-            <div class="desktop-icon" onclick="openWin('archive-win')">
-                <span class="icon-pic">🗄️</span><span>Архив</span>
-            </div>
+            <div class="desktop-icon" onclick="openWin('mail-win')"><span class="icon-pic">📬</span><span>Почта</span></div>
+            <div class="desktop-icon" onclick="openWin('archive-win')"><span class="icon-pic">🗄️</span><span>Архив</span></div>
         </div>
-        
-        <button onclick="enterRoom()" style="position: absolute; bottom: 20px; right: 20px; padding: 10px; cursor: pointer;">ВСТАТЬ (STAND UP)</button>
+        <button onclick="enterRoom()" style="position: absolute; bottom: 20px; right: 20px; padding: 10px; cursor: pointer;">ВСТАТЬ С КРЕСЛА</button>
 
         <div id="mail-win" class="window" style="width: 550px; left: 100px; top: 50px;">
-            <div class="title-bar"><span>Inbox - Secure Mail</span><button onclick="closeWin('mail-win')">X</button></div>
-            <div class="content" style="height: 350px;">
-                <div style="border-bottom: 1px solid #888; padding-bottom: 10px; margin-bottom: 10px;">
-                    <strong>От:</strong> Командир<br>
-                    <strong>Тема:</strong> ВВОДНЫЙ ИНСТРУКТАЖ
-                </div>
-                <div id="mail-text"></div>
-                <hr>
-                <div style="color: red;">
-                    <strong>[НОВОЕ СООБЩЕНИЕ ОТ: Лиза]</strong><br>
-                    <span id="lisa-mail-text"></span>
-                </div>
-            </div>
+            <div class="title-bar"><span>Входящие</span><button onclick="closeWin('mail-win')">X</button></div>
+            <div class="content" style="height: 380px;" id="mail-body"></div>
         </div>
 
         <div id="archive-win" class="window" style="width: 500px; left: 150px; top: 100px;">
-            <div class="title-bar"><span>RiverVill Archive - Case Files</span><button onclick="closeWin('archive-win')">X</button></div>
-            <div class="content" style="height: 300px;">
-                <div style="background: #eee; padding: 5px; border: 1px solid #999; margin-bottom: 10px;">
-                    📄 <strong>Lisa's case.doc</strong>
-                </div>
-                <div id="archive-text"></div>
-            </div>
+            <div class="title-bar"><span>Case_Archive_#049</span><button onclick="closeWin('archive-win')">X</button></div>
+            <div id="archive-body" class="content" style="height: 380px;"></div>
         </div>
     </div>
 </div>
 
 <div id="room-view">
     <canvas id="gameCanvas"></canvas>
-    <div class="ui-hint">[WASD] - Ходить | [E] - Вернуться за компьютер</div>
 </div>
 
 <script>
-    let lang = 'ru';
-    let difficulty = 'Novice';
+    let currentLang = null;
+    let currentDiff = null;
 
-    // ТВОИ ОРИГИНАЛЬНЫЕ ТЕКСТЫ
-    const database = {
+    const data = {
         ru: {
-            mail_cmd: "Здраствуй новичек, перед собой ты видешь рабочий стол верно ? Если в кратце как и пологаеться командиру я обьясню твою задачу и кейс который ты должен расследовать, твоя цель это расузнать как можно больше о нашей жертве или же враге и в итоге его найти.... пока он не нашел тебя (хаха) но если тебя не пугать то такое правда может случиться... Вообщем если будут поступать новые указания или директивы то прочитать ты их сможешь здесь... у тебя ещё уведомление появиться... до встреч дорой агент Конор",
-            mail_lisa: "Здраствуйте я обращаюсь к департаменту полиции так как хочу сообщить что моя лаборотория которую я посещаю может заниматься нелегальщиной.... прошу ответить на мой запрос, помогите ! (Отправлено месяц назад в 23:45)",
-            archive_lisa: "Здраствуйте агент Конор ! Мы хотим вас ввести в курс дела... Ваша цель это Лиза Син, ей 24 года ранее проживала в округах Хаваев, она проходила тесты в лаборотории X-Network после чего бесследно пропала... ходят слухи что она жива и забирает чужие жизни... будь осторожен конор, лады?",
+            cmd: "Здорово, Конор. Пялишься в монитор? Молодец, хоть кто-то делает вид, что нам не всё равно. За окном люди ходят, улыбаются, покупают чертов кофе и знать не знают, что под их ногами город гниет. Я командир, но толку от этого... Короче, разгребай это дерьмо с Лизой Син. Всем наверху плевать, они хотят только цифры в отчетах. Но я-то знаю, что ты — единственный, кому еще не лень копать. Найди её, Конор. Просто постарайся не сдохнуть, ладно? А то отчеты писать будет некому. Удачи, мать её.",
+            lisa_mail: "Я пишу это, и мне кажется, что я уже мертва. X-Network... они не лаборатория, они гребаные мясники. Всем плевать. Я звонила в полицию трижды, и дежурный просто посмеялся. Пожалуйста... если этот текст читает человек, а не системный бот — сделайте хоть что-нибудь. Я не хочу просто исчезнуть. (Месяц назад. Ответа нет. Да и кому он нужен?)",
+            case: "ОБЪЕКТ: Лиза Син. \n\nПропала без вести. Знаешь, ирония в том, что её родители до сих пор думают, что она на стажировке. Мы пишем рапорты, материмся в курилке, а за дверью участка течет обычная жизнь. Всем похрен. Конор, тебя кинули на это дело, потому что ты новенький и еще не научился закрывать глаза на запашок тухлятины. Это дело — висяк, от которого все открестились. Вникай, но помни: если ты пропадешь, город даже не заметит. Береги себя, парень.",
             weather: "User 1 Conor | 🌧️ Дождь, 12°C"
         },
         en: {
-            mail_cmd: "Hello rookie, you see the desktop in front of you, right? Briefly, as a commander should, I'll explain your task... find out as much as possible about our victim or enemy... before they find you (haha). Check here for directives. See you, Agent Conor.",
-            mail_lisa: "Hello, I am contacting the police department... the lab I visit may be doing illegal things. HELP ME! (Sent 1 month ago at 23:45)",
-            archive_lisa: "Hello Agent Conor! Target: Lisa Sin, 24, Hawaii. Vanished after X-Network tests. Rumors say she's alive and taking lives. Be careful, Conor, okay?",
+            cmd: "Hey, Conor. Staring at the screen? Good for you. Outside, people are smiling, buying damn coffee, having no clue the city is rotting. I'm the commander, but what's it worth? Just deal with this Lisa Sin crap. The higher-ups don't care, they just want stats. But I know you're the only one left who actually gives a damn. Find her, Conor. Try not to die, okay? I hate paperwork. Good luck.",
+            lisa_mail: "I feel like I'm already dead. X-Network... they aren't scientists, they're butchers. Nobody cares. I called the PD thrice, and they just laughed. Please... if a human is reading this — do something. I don't want to just vanish. (1 month ago. No reply.)",
+            case: "SUBJECT: Lisa Sin. \n\nMissing. The irony? Her parents still think she's interning. We write reports, we curse in the smoking room, while life goes on outside. Nobody gives a shit. Conor, they gave you this case because you're the only one who hasn't learned to ignore the smell of rot yet. Dig in, but remember: if you vanish, the city won't even blink. Stay safe, kid.",
             weather: "User 1 Conor | 🌧️ Rain, 12°C"
         }
     };
 
-    function setDiff(d) { difficulty = d; }
+    function selectLang(l) {
+        currentLang = l;
+        document.querySelectorAll('.boot-btn[id^="lang-"]').forEach(b => b.classList.remove('selected'));
+        document.getElementById('lang-' + l).classList.add('selected');
+        checkStart();
+    }
 
-    function initGame(l) {
-        lang = l;
+    function selectDiff(d) {
+        currentDiff = d;
+        document.querySelectorAll('.boot-btn[id^="diff-"]').forEach(b => b.classList.remove('selected'));
+        document.getElementById('diff-' + d.toLowerCase()).classList.add('selected');
+        checkStart();
+    }
+
+    function checkStart() { if(currentLang && currentDiff) document.getElementById('start-btn').style.display = 'inline-block'; }
+
+    function startGame() {
         document.getElementById('boot-screen').style.display = 'none';
         document.getElementById('os-interface').style.display = 'flex';
-        document.getElementById('mail-text').innerText = database[lang].mail_cmd;
-        document.getElementById('lisa-mail-text').innerText = database[lang].mail_lisa;
-        document.getElementById('archive-text').innerText = database[lang].archive_lisa;
-        document.getElementById('status-text').innerText = database[lang].weather;
+        document.getElementById('mail-body').innerHTML = `<strong>ОТ: Командир (тот, кому не похрен)</strong><br>${data[currentLang].cmd}<hr><strong style="color:red">ОТ: Лиза Син (Призрак)</strong><br>${data[currentLang].lisa_mail}`;
+        document.getElementById('archive-body').innerHTML = `<strong>ОТЧЕТ_#049 (ГНИЛОЕ ДЕЛО)</strong><br><br>${data[currentLang].case}`;
     }
 
     function openWin(id) { document.getElementById(id).style.display = 'flex'; }
@@ -158,81 +144,49 @@
     // --- 2D ДВИЖОК ---
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    let player = { x: 500, y: 500, w: 40, h: 40, speed: 6, frame: 0 };
+    let player = { x: 400, y: 500, speed: 6, frame: 0 };
     let keys = {};
 
-    window.onkeydown = (e) => { 
-        keys[e.key.toLowerCase()] = true; 
-        if(e.key.toLowerCase() === 'e' || e.key.toLowerCase() === 'у') {
-            if(player.y > 450) exitRoom();
-        }
-    };
-    window.onkeyup = (e) => { keys[e.key.toLowerCase()] = false; };
+    window.onkeydown = (e) => { keys[e.key.toLowerCase()] = true; if((e.key === 'e' || e.key === 'у') && player.y > 450) exitRoom(); };
+    window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
 
     function enterRoom() {
         document.getElementById('os-interface').style.display = 'none';
         document.getElementById('room-view').style.display = 'block';
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
         requestAnimationFrame(gameLoop);
     }
-
-    function exitRoom() {
-        document.getElementById('room-view').style.display = 'none';
-        document.getElementById('os-interface').style.display = 'flex';
-    }
+    function exitRoom() { document.getElementById('room-view').style.display = 'none'; document.getElementById('os-interface').style.display = 'flex'; }
 
     function gameLoop() {
         if(document.getElementById('room-view').style.display === 'none') return;
-        update();
-        draw();
-        requestAnimationFrame(gameLoop);
-    }
-
-    function update() {
         if(keys['w'] || keys['ц']) player.y -= player.speed;
         if(keys['s'] || keys['ы']) player.y += player.speed;
         if(keys['a'] || keys['ф']) player.x -= player.speed;
         if(keys['d'] || keys['в']) player.x += player.speed;
         player.frame += 0.05;
-        // Коллизии
-        player.x = Math.max(50, Math.min(canvas.width-90, player.x));
-        player.y = Math.max(150, Math.min(canvas.height-90, player.y));
-    }
 
-    function draw() {
-        // Пол и Стены
-        ctx.fillStyle = "#111"; ctx.fillRect(0,0,canvas.width, canvas.height);
-        ctx.fillStyle = "#050505"; ctx.fillRect(0,0,canvas.width, 150);
+        ctx.fillStyle = "#0a0a0a"; ctx.fillRect(0,0,canvas.width, canvas.height);
         
-        // Окно с дождем
+        // Окно (ирония - там дождь и спокойствие)
         ctx.fillStyle = "#001a33"; ctx.fillRect(canvas.width/2 - 100, 40, 200, 80);
-        ctx.strokeStyle = "rgba(255,255,255,0.4)";
-        for(let i=0; i<10; i++) {
-            let dx = (canvas.width/2-100) + ((Math.sin(i+player.frame)+1)*100);
-            let dy = 40 + (player.frame*60 + i*20)%80;
-            ctx.beginPath(); ctx.moveTo(dx, dy); ctx.lineTo(dx-2, dy+8); ctx.stroke();
+        ctx.strokeStyle = "rgba(255,255,255,0.2)";
+        for(let i=0; i<5; i++) {
+            let dy = 40 + (player.frame*30 + i*30)%80;
+            ctx.beginPath(); ctx.moveTo(canvas.width/2-50+i*20, dy); ctx.lineTo(canvas.width/2-52+i*20, dy+10); ctx.stroke();
         }
 
-        // Кабинки офиса
-        for(let i=0; i<2; i++) {
-            ctx.fillStyle = "#333"; ctx.fillRect(100 + i*600, 250, 150, 80);
-            ctx.fillStyle = "#222"; ctx.fillRect(100 + i*600, 240, 150, 10);
-            ctx.fillStyle = "#4b3621"; ctx.fillRect(120+i*600, 260, 30, 30); // NPC
-        }
+        // Стол Конора
+        ctx.fillStyle = "#333"; ctx.fillRect(canvas.width/2 - 80, 520, 160, 80);
+        ctx.fillStyle = "#33ff33"; ctx.fillRect(canvas.width/2 - 40, 515, 80, 5);
 
-        // ТВОЙ СТОЛ
-        ctx.fillStyle = "#444"; ctx.fillRect(canvas.width/2 - 80, 520, 160, 80);
-        ctx.fillStyle = "#33ff33"; ctx.shadowBlur = 10; ctx.shadowColor = "#33ff33";
-        ctx.fillRect(canvas.width/2 - 40, 515, 80, 5); ctx.shadowBlur = 0;
-
-        // КОНОР
+        // Конор
         let breath = Math.sin(player.frame*2)*2;
         ctx.fillStyle = "#d2b48c"; ctx.fillRect(player.x, player.y+breath, 40, 40);
         ctx.fillStyle = "#3e2723"; ctx.fillRect(player.x, player.y+25+breath, 40, 15);
-        ctx.fillStyle = "black"; 
-        ctx.fillRect(player.x+8, player.y+12+breath, 10, 2);
-        ctx.fillRect(player.x+22, player.y+12+breath, 10, 2);
+        ctx.fillStyle = "black"; ctx.fillRect(player.x+8, player.y+12+breath, 10, 2); ctx.fillRect(player.x+22, player.y+12+breath, 10, 2);
+        
+        requestAnimationFrame(gameLoop);
     }
 </script>
 </body>

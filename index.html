@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>RiverVill PD - Terminal 2.5</title>
+    <title>RiverVill PD - Terminal 2.6</title>
     <style>
         :root {
             --win-gray: #c0c0c0;
@@ -21,32 +21,23 @@
             z-index: 9999; background-size: 100% 3px, 3px 100%; pointer-events: none; opacity: 0.4;
         }
 
-        /* АНИМАЦИЯ ТРЯСКИ ДЛЯ ЯРОСТИ */
         @keyframes shake {
-            0% { transform: translate(1px, 1px) rotate(0deg); }
-            20% { transform: translate(-1px, -2px) rotate(-1deg); }
-            40% { transform: translate(-3px, 0px) rotate(1deg); }
-            60% { transform: translate(3px, 2px) rotate(0deg); }
-            80% { transform: translate(1px, -1px) rotate(1deg); }
-            100% { transform: translate(-1px, 2px) rotate(-1deg); }
+            0% { transform: translate(1px, 1px); }
+            20% { transform: translate(-1px, -2px); }
+            40% { transform: translate(-3px, 0px); }
+            60% { transform: translate(3px, 2px); }
+            80% { transform: translate(1px, -1px); }
+            100% { transform: translate(-1px, 2px); }
         }
         .rage-text { color: var(--rage-red) !important; display: inline-block; animation: shake 0.2s infinite; font-weight: bold; }
 
-        /* МЕНЮ */
-        #boot-screen {
-            position: fixed; width: 100%; height: 100%; background: #050505;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 5000; color: var(--term-green);
-        }
+        /* ИНТЕРФЕЙС ОС */
+        #boot-screen { position: fixed; width: 100%; height: 100%; background: #050505; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5000; color: var(--term-green); }
         .boot-box { border: 2px solid var(--term-green); padding: 40px; background: #000; text-align: center; }
-        .boot-btn { 
-            background: transparent; color: var(--term-green); border: 1px solid var(--term-green); 
-            padding: 10px 25px; margin: 10px; cursor: pointer; transition: 0.2s; font-family: inherit;
-        }
-        .boot-btn.selected { background: var(--term-green); color: #000; box-shadow: 0 0 15px var(--term-green); }
+        .boot-btn { background: transparent; color: var(--term-green); border: 1px solid var(--term-green); padding: 10px 25px; margin: 10px; cursor: pointer; transition: 0.2s; font-family: inherit; }
+        .boot-btn.selected { background: var(--term-green); color: #000; }
         #start-btn { margin-top: 30px; display: none; border-width: 3px; }
 
-        /* ИНТЕРФЕЙС ОС */
         #os-interface { display: none; height: 100%; flex-direction: column; }
         #top-bar { background: var(--win-gray); border-bottom: 2px solid var(--win-dark); color: #000; padding: 5px 15px; display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; }
         #desktop { flex-grow: 1; background: #3a6ea5; position: relative; }
@@ -56,16 +47,20 @@
 
         .window { position: absolute; background: var(--win-gray); border: 2px solid #fff; border-right: 2px solid var(--win-dark); border-bottom: 2px solid var(--win-dark); display: none; flex-direction: column; z-index: 100; }
         .title-bar { background: var(--win-blue); color: white; padding: 4px 8px; display: flex; justify-content: space-between; font-size: 12px; }
-        .content { padding: 15px; color: black; background: white; margin: 2px; border: 1px solid var(--win-dark); overflow-y: auto; white-space: pre-wrap; font-size: 14px; line-height: 1.5; }
+        .close-btn { background: var(--win-gray); border: 1px solid #000; cursor: pointer; font-size: 9px; padding: 0 4px; }
+        .content { padding: 15px; color: black; background: white; margin: 2px; border: 1px solid var(--win-dark); overflow-y: auto; white-space: pre-wrap; font-size: 14px; }
 
-        /* 2D РЕЖИМ И ДИАЛОГИ */
-        #room-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 4000; }
+        /* ДИАЛОГОВОЕ ОКНО */
         #dialog-box {
             position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            width: 70%; height: 100px; background: rgba(0, 0, 0, 0.9);
+            width: 70%; min-height: 100px; background: rgba(0, 0, 0, 0.95);
             border: 2px solid var(--win-dark); border-top: 4px solid var(--win-blue);
             color: #fff; padding: 20px; display: none; z-index: 4500;
         }
+        .dialog-ok { position: absolute; bottom: 10px; right: 10px; background: var(--win-gray); border: 1px solid #fff; color: #000; cursor: pointer; padding: 2px 10px; font-size: 12px; font-weight: bold; }
+
+        #room-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 4000; }
+        canvas { display: block; }
     </style>
 </head>
 <body>
@@ -74,7 +69,7 @@
 
 <div id="boot-screen">
     <div class="boot-box">
-        <h1>RIVERVILL SYSTEM v2.5</h1>
+        <h1>RIVERVILL SYSTEM v2.6</h1>
         <p>ЯЗЫК / LANGUAGE</p>
         <button class="boot-btn" id="lang-ru" onclick="selectLang('ru')">РУССКИЙ</button>
         <button class="boot-btn" id="lang-en" onclick="selectLang('en')">ENGLISH</button>
@@ -88,7 +83,7 @@
 
 <div id="os-interface">
     <div id="top-bar">
-        <div>RVPD Terminal | Logged as: Conor</div>
+        <div>RVPD Terminal | User: Conor</div>
         <div id="status-text">12°C | 🌧️ Снаружи всё спокойно...</div>
     </div>
     <div id="desktop">
@@ -96,16 +91,15 @@
             <div class="desktop-icon" onclick="openWin('mail-win')"><span class="icon-pic">📬</span><span>Почта</span></div>
             <div class="desktop-icon" onclick="openWin('archive-win')"><span class="icon-pic">🗄️</span><span>Архив</span></div>
         </div>
-        
         <button onclick="enterRoom()" style="position: absolute; bottom: 20px; right: 20px; padding: 10px; cursor: pointer;">ВСТАТЬ (STAND UP)</button>
 
         <div id="mail-win" class="window" style="width: 550px; left: 100px; top: 50px;">
-            <div class="title-bar"><span>Mail_Client</span><button onclick="closeWin('mail-win', true)">X</button></div>
+            <div class="title-bar"><span>Mail_Client</span><button class="close-btn" onclick="closeWin('mail-win', true)">X</button></div>
             <div class="content" style="height: 380px;" id="mail-body"></div>
         </div>
 
         <div id="archive-win" class="window" style="width: 500px; left: 150px; top: 100px;">
-            <div class="title-bar"><span>Archive_#049</span><button onclick="closeWin('archive-win')">X</button></div>
+            <div class="title-bar"><span>Archive_#049</span><button class="close-btn" onclick="closeWin('archive-win')">X</button></div>
             <div id="archive-body" class="content" style="height: 380px;"></div>
         </div>
     </div>
@@ -113,6 +107,7 @@
     <div id="dialog-box">
         <div id="dialog-name" style="color:var(--term-green); font-weight:bold; margin-bottom:10px;">КОНОР:</div>
         <div id="dialog-text"></div>
+        <button class="dialog-ok" onclick="hideDialog()">ЗАКРЫТЬ [X]</button>
     </div>
 </div>
 
@@ -127,16 +122,16 @@
 
     const data = {
         ru: {
-            cmd: "Здорово, Конор. Разгребай это дерьмо с Лизой Син. Всем наверху плевать, они хотят только цифры. Просто постарайся не сдохнуть, ладно? А то отчеты писать будет некому. Удачи, мать её.",
-            lisa_mail: "Пожалуйста... X-Network... они гребаные мясники. Всем плевать. Я звонила трижды, и дежурный просто посмеялся. Я не хочу просто исчезнуть.",
-            case: "ОБЪЕКТ: Лиза Син. Пропала без вести. Всем похрен. Конор, тебя кинули на это дело, потому что ты новенький. Вникай, но помни: если ты пропадешь, город даже не заметит.",
+            cmd: "Здорово, Конор. Разгребай это дерьмо с Лизой Син. Всем наверху плевать, они хотят только цифры. Просто постарайся не сдохнуть, ладно? А то отчеты писать будет некому.",
+            lisa_mail: "Пожалуйста... X-Network... они гребаные мясники. Я не хочу просто исчезнуть.",
+            case: "ОБЪЕКТ: Лиза Син. Пропала без вести. Всем похрен. Конор, тебя кинули на это дело, потому что ты новенький.",
             start_msg: "И так... пора заняться этим... делом? Надеюсь, что всё будет в порядке...",
             rage_msg: "Вот же сука... То есть они меня <span class='rage-text'>НА СМЕРТЬ</span> с этой Лизой посылают?! Нее, ну так не пойдёт... Я это дело разгребу и эту <span class='rage-text'>ЧЕРТОВУ ВЕРХУШКУ РАСХУЯЧУ!</span>"
         },
         en: {
-            cmd: "Hey Conor. Deal with this Lisa Sin crap. High-ups don't care. Just try not to die, okay? Or there'll be no one to write reports. Good luck, damn it.",
-            lisa_mail: "Please... X-Network... they are butchers. Nobody cares. I called thrice, the duty officer laughed. I don't want to vanish.",
-            case: "SUBJECT: Lisa Sin. Missing. Nobody gives a shit. Conor, they threw you this because you're new. If you vanish, the city won't blink.",
+            cmd: "Hey Conor. Deal with this Lisa Sin crap. High-ups don't care. Just try not to die, okay?",
+            lisa_mail: "Please... X-Network... they are butchers. I don't want to vanish.",
+            case: "SUBJECT: Lisa Sin. Missing. Nobody gives a shit. Conor, they threw you this because you're new.",
             start_msg: "Well... time to get to this... case? Hope everything will be fine...",
             rage_msg: "Son of a bitch... So they're sending me to <span class='rage-text'>MY DEATH</span> with this Lisa?! No way... I'll solve this and <span class='rage-text'>FUCK UP THAT DAMN LEADERSHIP!</span>"
         }
@@ -163,7 +158,10 @@
         const textElem = document.getElementById('dialog-text');
         box.style.display = 'block';
         textElem.innerHTML = text;
-        setTimeout(() => { box.style.display = 'none'; }, 6000);
+    }
+
+    function hideDialog() {
+        document.getElementById('dialog-box').style.display = 'none';
     }
 
     function startGame() {
@@ -172,7 +170,6 @@
         document.getElementById('mail-body').innerHTML = `<strong>ОТ: Командир</strong><br>${data[currentLang].cmd}<hr><strong style="color:red">ОТ: Лиза Син</strong><br>${data[currentLang].lisa_mail}`;
         document.getElementById('archive-body').innerHTML = `<strong>CASE_REPORT_#049</strong><br><br>${data[currentLang].case}`;
         
-        // Первый диалог при входе
         setTimeout(() => { showDialog(data[currentLang].start_msg); }, 1000);
     }
 
@@ -184,8 +181,8 @@
     function closeWin(id, checkRage = false) { 
         document.getElementById(id).style.display = 'none'; 
         if(checkRage && mailOpened) {
-            setTimeout(() => { showDialog(data[currentLang].rage_msg); }, 500);
-            mailOpened = false; // Чтобы не частил
+            setTimeout(() => { showDialog(data[currentLang].rage_msg); }, 3000);
+            mailOpened = false; 
         }
     }
 
@@ -197,7 +194,7 @@
 
     window.onkeydown = (e) => { 
         keys[e.key.toLowerCase()] = true; 
-        if((e.key === 'e' || e.key === 'у') && player.y > 450) exitRoom(); 
+        if((e.key === 'e' || e.key === 'у') && player.y > 450) enterRoom(); 
     };
     window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
 

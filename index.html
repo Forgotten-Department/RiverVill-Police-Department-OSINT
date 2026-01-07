@@ -2,13 +2,14 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>RiverVill PD - Terminal 1.0.2</title>
+    <title>RiverVill PD - Terminal 2.5</title>
     <style>
         :root {
             --win-gray: #c0c0c0;
             --win-dark: #808080;
             --win-blue: #000080;
             --term-green: #33ff33;
+            --rage-red: #ff3333;
         }
 
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; font-family: 'Courier New', monospace; overflow: hidden; }
@@ -17,10 +18,21 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
                         linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-            z-index: 9999; background-size: 100% 3px, 3px 100%; pointer-events: none; opacity: 0.5;
+            z-index: 9999; background-size: 100% 3px, 3px 100%; pointer-events: none; opacity: 0.4;
         }
 
-        /* МЕНЮ ВЫБОРА */
+        /* АНИМАЦИЯ ТРЯСКИ ДЛЯ ЯРОСТИ */
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            20% { transform: translate(-1px, -2px) rotate(-1deg); }
+            40% { transform: translate(-3px, 0px) rotate(1deg); }
+            60% { transform: translate(3px, 2px) rotate(0deg); }
+            80% { transform: translate(1px, -1px) rotate(1deg); }
+            100% { transform: translate(-1px, 2px) rotate(-1deg); }
+        }
+        .rage-text { color: var(--rage-red) !important; display: inline-block; animation: shake 0.2s infinite; font-weight: bold; }
+
+        /* МЕНЮ */
         #boot-screen {
             position: fixed; width: 100%; height: 100%; background: #050505;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -46,8 +58,14 @@
         .title-bar { background: var(--win-blue); color: white; padding: 4px 8px; display: flex; justify-content: space-between; font-size: 12px; }
         .content { padding: 15px; color: black; background: white; margin: 2px; border: 1px solid var(--win-dark); overflow-y: auto; white-space: pre-wrap; font-size: 14px; line-height: 1.5; }
 
+        /* 2D РЕЖИМ И ДИАЛОГИ */
         #room-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 4000; }
-        canvas { display: block; }
+        #dialog-box {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            width: 70%; height: 100px; background: rgba(0, 0, 0, 0.9);
+            border: 2px solid var(--win-dark); border-top: 4px solid var(--win-blue);
+            color: #fff; padding: 20px; display: none; z-index: 4500;
+        }
     </style>
 </head>
 <body>
@@ -56,13 +74,13 @@
 
 <div id="boot-screen">
     <div class="boot-box">
-        <h1>RIVERVILL SYSTEM v2.2</h1>
-        <p>ВЫБЕРИТЕ ЯЗЫК</p>
+        <h1>RIVERVILL SYSTEM v2.5</h1>
+        <p>ЯЗЫК / LANGUAGE</p>
         <button class="boot-btn" id="lang-ru" onclick="selectLang('ru')">РУССКИЙ</button>
         <button class="boot-btn" id="lang-en" onclick="selectLang('en')">ENGLISH</button>
         <p>РЕЖИМ ПРИСУТСТВИЯ</p>
-        <button class="boot-btn" id="diff-novice" onclick="selectDiff('Novice')">ОБЫЧНЫЙ</button>
-        <button class="boot-btn" id="diff-story" onclick="selectDiff('Story')">ИСТОРИЯ</button>
+        <button class="boot-btn" id="diff-novice" onclick="selectDiff('Novice')">НОВИЧЕК</button>
+        <button class="boot-btn" id="diff-story" onclick="selectDiff('Story')">STORY MODE</button>
         <br>
         <button class="boot-btn" id="start-btn" onclick="startGame()">ВОЙТИ В ПУСТОТУ</button>
     </div>
@@ -70,25 +88,31 @@
 
 <div id="os-interface">
     <div id="top-bar">
-        <div>RVPD Terminal - User: Conor</div>
-        <div id="status-text">12°C | Снаружи всё спокойно...</div>
+        <div>RVPD Terminal | Logged as: Conor</div>
+        <div id="status-text">12°C | 🌧️ Снаружи всё спокойно...</div>
     </div>
     <div id="desktop">
         <div style="display: flex; flex-direction: column;">
             <div class="desktop-icon" onclick="openWin('mail-win')"><span class="icon-pic">📬</span><span>Почта</span></div>
             <div class="desktop-icon" onclick="openWin('archive-win')"><span class="icon-pic">🗄️</span><span>Архив</span></div>
         </div>
-        <button onclick="enterRoom()" style="position: absolute; bottom: 20px; right: 20px; padding: 10px; cursor: pointer;">ВСТАТЬ С КРЕСЛА</button>
+        
+        <button onclick="enterRoom()" style="position: absolute; bottom: 20px; right: 20px; padding: 10px; cursor: pointer;">ВСТАТЬ (STAND UP)</button>
 
         <div id="mail-win" class="window" style="width: 550px; left: 100px; top: 50px;">
-            <div class="title-bar"><span>Входящие</span><button onclick="closeWin('mail-win')">X</button></div>
+            <div class="title-bar"><span>Mail_Client</span><button onclick="closeWin('mail-win', true)">X</button></div>
             <div class="content" style="height: 380px;" id="mail-body"></div>
         </div>
 
         <div id="archive-win" class="window" style="width: 500px; left: 150px; top: 100px;">
-            <div class="title-bar"><span>Case_Archive_#049</span><button onclick="closeWin('archive-win')">X</button></div>
+            <div class="title-bar"><span>Archive_#049</span><button onclick="closeWin('archive-win')">X</button></div>
             <div id="archive-body" class="content" style="height: 380px;"></div>
         </div>
+    </div>
+    
+    <div id="dialog-box">
+        <div id="dialog-name" style="color:var(--term-green); font-weight:bold; margin-bottom:10px;">КОНОР:</div>
+        <div id="dialog-text"></div>
     </div>
 </div>
 
@@ -99,19 +123,22 @@
 <script>
     let currentLang = null;
     let currentDiff = null;
+    let mailOpened = false;
 
     const data = {
         ru: {
-            cmd: "Здорово, Конор. Пялишься в монитор? Молодец, хоть кто-то делает вид, что нам не всё равно. За окном люди ходят, улыбаются, покупают чертов кофе и знать не знают, что под их ногами город гниет. Я командир, но толку от этого... Короче, разгребай это дерьмо с Лизой Син. Всем наверху плевать, они хотят только цифры в отчетах. Но я-то знаю, что ты — единственный, кому еще не лень копать. Найди её, Конор. Просто постарайся не сдохнуть, ладно? А то отчеты писать будет некому. Удачи, мать её.",
-            lisa_mail: "Я пишу это, и мне кажется, что я уже мертва. X-Network... они не лаборатория, они гребаные мясники. Всем плевать. Я звонила в полицию трижды, и дежурный просто посмеялся. Пожалуйста... если этот текст читает человек, а не системный бот — сделайте хоть что-нибудь. Я не хочу просто исчезнуть. (Месяц назад. Ответа нет. Да и кому он нужен?)",
-            case: "ОБЪЕКТ: Лиза Син. \n\nПропала без вести. Знаешь, ирония в том, что её родители до сих пор думают, что она на стажировке. Мы пишем рапорты, материмся в курилке, а за дверью участка течет обычная жизнь. Всем похрен. Конор, тебя кинули на это дело, потому что ты новенький и еще не научился закрывать глаза на запашок тухлятины. Это дело — висяк, от которого все открестились. Вникай, но помни: если ты пропадешь, город даже не заметит. Береги себя, парень.",
-            weather: "User 1 Conor | 🌧️ Дождь, 12°C"
+            cmd: "Здорово, Конор. Разгребай это дерьмо с Лизой Син. Всем наверху плевать, они хотят только цифры. Просто постарайся не сдохнуть, ладно? А то отчеты писать будет некому. Удачи, мать её.",
+            lisa_mail: "Пожалуйста... X-Network... они гребаные мясники. Всем плевать. Я звонила трижды, и дежурный просто посмеялся. Я не хочу просто исчезнуть.",
+            case: "ОБЪЕКТ: Лиза Син. Пропала без вести. Всем похрен. Конор, тебя кинули на это дело, потому что ты новенький. Вникай, но помни: если ты пропадешь, город даже не заметит.",
+            start_msg: "И так... пора заняться этим... делом? Надеюсь, что всё будет в порядке...",
+            rage_msg: "Вот же сука... То есть они меня <span class='rage-text'>НА СМЕРТЬ</span> с этой Лизой посылают?! Нее, ну так не пойдёт... Я это дело разгребу и эту <span class='rage-text'>ЧЕРТОВУ ВЕРХУШКУ РАСХУЯЧУ!</span>"
         },
         en: {
-            cmd: "Hey, Conor. Staring at the screen? Good for you. Outside, people are smiling, buying damn coffee, having no clue the city is rotting. I'm the commander, but what's it worth? Just deal with this Lisa Sin crap. The higher-ups don't care, they just want stats. But I know you're the only one left who actually gives a damn. Find her, Conor. Try not to die, okay? I hate paperwork. Good luck.",
-            lisa_mail: "I feel like I'm already dead. X-Network... they aren't scientists, they're butchers. Nobody cares. I called the PD thrice, and they just laughed. Please... if a human is reading this — do something. I don't want to just vanish. (1 month ago. No reply.)",
-            case: "SUBJECT: Lisa Sin. \n\nMissing. The irony? Her parents still think she's interning. We write reports, we curse in the smoking room, while life goes on outside. Nobody gives a shit. Conor, they gave you this case because you're the only one who hasn't learned to ignore the smell of rot yet. Dig in, but remember: if you vanish, the city won't even blink. Stay safe, kid.",
-            weather: "User 1 Conor | 🌧️ Rain, 12°C"
+            cmd: "Hey Conor. Deal with this Lisa Sin crap. High-ups don't care. Just try not to die, okay? Or there'll be no one to write reports. Good luck, damn it.",
+            lisa_mail: "Please... X-Network... they are butchers. Nobody cares. I called thrice, the duty officer laughed. I don't want to vanish.",
+            case: "SUBJECT: Lisa Sin. Missing. Nobody gives a shit. Conor, they threw you this because you're new. If you vanish, the city won't blink.",
+            start_msg: "Well... time to get to this... case? Hope everything will be fine...",
+            rage_msg: "Son of a bitch... So they're sending me to <span class='rage-text'>MY DEATH</span> with this Lisa?! No way... I'll solve this and <span class='rage-text'>FUCK UP THAT DAMN LEADERSHIP!</span>"
         }
     };
 
@@ -131,23 +158,47 @@
 
     function checkStart() { if(currentLang && currentDiff) document.getElementById('start-btn').style.display = 'inline-block'; }
 
+    function showDialog(text) {
+        const box = document.getElementById('dialog-box');
+        const textElem = document.getElementById('dialog-text');
+        box.style.display = 'block';
+        textElem.innerHTML = text;
+        setTimeout(() => { box.style.display = 'none'; }, 6000);
+    }
+
     function startGame() {
         document.getElementById('boot-screen').style.display = 'none';
         document.getElementById('os-interface').style.display = 'flex';
-        document.getElementById('mail-body').innerHTML = `<strong>ОТ: Командир (тот, кому не похрен)</strong><br>${data[currentLang].cmd}<hr><strong style="color:red">ОТ: Лиза Син (Призрак)</strong><br>${data[currentLang].lisa_mail}`;
-        document.getElementById('archive-body').innerHTML = `<strong>ОТЧЕТ_#049 (ГНИЛОЕ ДЕЛО)</strong><br><br>${data[currentLang].case}`;
+        document.getElementById('mail-body').innerHTML = `<strong>ОТ: Командир</strong><br>${data[currentLang].cmd}<hr><strong style="color:red">ОТ: Лиза Син</strong><br>${data[currentLang].lisa_mail}`;
+        document.getElementById('archive-body').innerHTML = `<strong>CASE_REPORT_#049</strong><br><br>${data[currentLang].case}`;
+        
+        // Первый диалог при входе
+        setTimeout(() => { showDialog(data[currentLang].start_msg); }, 1000);
     }
 
-    function openWin(id) { document.getElementById(id).style.display = 'flex'; }
-    function closeWin(id) { document.getElementById(id).style.display = 'none'; }
+    function openWin(id) { 
+        document.getElementById(id).style.display = 'flex'; 
+        if(id === 'mail-win') mailOpened = true;
+    }
 
-    // --- 2D ДВИЖОК ---
+    function closeWin(id, checkRage = false) { 
+        document.getElementById(id).style.display = 'none'; 
+        if(checkRage && mailOpened) {
+            setTimeout(() => { showDialog(data[currentLang].rage_msg); }, 500);
+            mailOpened = false; // Чтобы не частил
+        }
+    }
+
+    // --- 2D ENGINE (STABLE) ---
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     let player = { x: 400, y: 500, speed: 6, frame: 0 };
     let keys = {};
 
-    window.onkeydown = (e) => { keys[e.key.toLowerCase()] = true; if((e.key === 'e' || e.key === 'у') && player.y > 450) exitRoom(); };
+    window.onkeydown = (e) => { 
+        keys[e.key.toLowerCase()] = true; 
+        if((e.key === 'e' || e.key === 'у') && player.y > 450) exitRoom(); 
+    };
     window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
 
     function enterRoom() {
@@ -167,20 +218,9 @@
         player.frame += 0.05;
 
         ctx.fillStyle = "#0a0a0a"; ctx.fillRect(0,0,canvas.width, canvas.height);
-        
-        // Окно (ирония - там дождь и спокойствие)
-        ctx.fillStyle = "#001a33"; ctx.fillRect(canvas.width/2 - 100, 40, 200, 80);
-        ctx.strokeStyle = "rgba(255,255,255,0.2)";
-        for(let i=0; i<5; i++) {
-            let dy = 40 + (player.frame*30 + i*30)%80;
-            ctx.beginPath(); ctx.moveTo(canvas.width/2-50+i*20, dy); ctx.lineTo(canvas.width/2-52+i*20, dy+10); ctx.stroke();
-        }
-
-        // Стол Конора
         ctx.fillStyle = "#333"; ctx.fillRect(canvas.width/2 - 80, 520, 160, 80);
         ctx.fillStyle = "#33ff33"; ctx.fillRect(canvas.width/2 - 40, 515, 80, 5);
 
-        // Конор
         let breath = Math.sin(player.frame*2)*2;
         ctx.fillStyle = "#d2b48c"; ctx.fillRect(player.x, player.y+breath, 40, 40);
         ctx.fillStyle = "#3e2723"; ctx.fillRect(player.x, player.y+25+breath, 40, 15);

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RiverVill PD - OSINT Terminal</title>
+    <style>
+        /* --- СТИЛИ (CSS) --- */
+        
+        /* 1. Основа: Черный фон, шрифт терминала */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #33ff33; /* Классический терминальный зеленый */
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden; /* Чтобы не было полос прокрутки у самого окна браузера */
+            height: 100vh;
+            user-select: none; /* Нельзя выделять текст, как в старых интерфейсах */
+        }
+
+        /* 2. Эффект ЭЛТ-монитора (CRT Effect) */
+        .crt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none; /* Чтобы можно было кликать сквозь этот слой */
+            z-index: 1000;
+        }
+
+        .screen-flicker {
+            animation: flicker 0.15s infinite;
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.97; }
+            50% { opacity: 1; }
+            100% { opacity: 0.98; }
+        }
+
+        /* Текстовое свечение */
+        .glow {
+            text-shadow: 0 0 5px #33ff33, 0 0 10px #33ff33;
+        }
+
+        /* 3. Рабочий стол */
+        #desktop {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Иконки */
+        .icon-container {
+            width: 80px;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid transparent;
+            padding: 5px;
+        }
+
+        .icon-container:hover {
+            border: 1px dashed #33ff33;
+            background-color: rgba(51, 255, 51, 0.1);
+        }
+
+        .icon-img {
+            font-size: 40px;
+            margin-bottom: 5px;
+        }
+
+        .icon-label {
+            font-size: 12px;
+        }
+
+        /* 4. Окна (Почта, Архив и т.д.) */
+        .window {
+            position: absolute;
+            top: 10%;
+            left: 20%;
+            width: 600px;
+            background-color: #000;
+            border: 2px solid #33ff33;
+            box-shadow: 0 0 15px rgba(51, 255, 51, 0.2);
+            display: none; /* Скрыто по умолчанию */
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .title-bar {
+            background-color: #33ff33;
+            color: #000;
+            padding: 5px 10px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close-btn {
+            background: #000;
+            color: #33ff33;
+            border: 1px solid #000;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .close-btn:hover {
+            background: #33ff33;
+            color: #000;
+        }
+
+        .window-content {
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+
+        /* Стиль самого письма */
+        .email-header {
+            border-bottom: 1px dashed #33ff33;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .email-body {
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        /* Уведомление */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            border: 2px solid #33ff33;
+            background: #000;
+            padding: 10px;
+            display: none;
+            z-index: 50;
+        }
+
+    </style>
+</head>
+<body class="screen-flicker">
+
+    <div class="crt-overlay"></div>
+
+    <div style="border-bottom: 2px solid #33ff33; padding: 5px 10px; display: flex; justify-content: space-between;">
+        <span>RIVERVILL PD // OSINT v.1.0</span>
+        <span id="clock">00:00:00</span>
+    </div>
+
+    <div id="desktop">
+        <div class="icon-container" onclick="openWindow('mail-window')">
+            <div class="icon-img">✉️</div> <div class="icon-label glow">MAIL_CLIENT</div>
+        </div>
+
+        <div class="icon-container">
+            <div class="icon-img">🗄️</div>
+            <div class="icon-label">ARCHIVE</div>
+        </div>
+    </div>
+
+    <div id="mail-window" class="window">
+        <div class="title-bar">
+            <span>SECURE MAIL // INBOX</span>
+            <button class="close-btn" onclick="closeWindow('mail-window')">[X]</button>
+        </div>
+        <div class="window-content">
+            <div class="email-header">
+                <p><strong>FROM:</strong> COMMANDER [REDACTED]</p>
+                <p><strong>TO:</strong> AGENT CONOR</p>
+                <p><strong>SUBJECT:</strong> ДЕЛО №404 - ВВОДНЫЙ ИНСТРУКТАЖ</p>
+            </div>
+            <div class="email-body">
+                <p>Здравствуй, новичок.</p>
+                <p>Перед собой ты видишь рабочий стол, верно?</p>
+                <p>Если вкратце, как и полагается командиру, я объясню твою задачу и кейс, который ты должен расследовать. Твоя цель — разузнать как можно больше о нашей жертве или же враге, и в итоге его найти...</p>
+                <p>...пока он не нашел тебя.</p>
+                <p>Ха-ха. Но если тебя не пугать, то такое правда может случиться.</p>
+                <p>В общем, если будут поступать новые указания или директивы, то прочитать ты их сможешь здесь. У тебя еще уведомление появится.</p>
+                <br>
+                <p>До встречи, дорогой агент Конор.</p>
+                <p><em>-- Конец сообщения --</em></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification-area" class="notification glow">
+        ! НОВОЕ СООБЩЕНИЕ !
+    </div>
+
+    <script>
+        // --- ЛОГИКА (JS) ---
+
+        // 1. Часы в углу
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString();
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // 2. Открытие окон
+        function openWindow(id) {
+            const win = document.getElementById(id);
+            win.style.display = 'flex';
+            
+            // Если открыли почту, скрываем уведомление (если оно было)
+            if(id === 'mail-window') {
+                document.getElementById('notification-area').style.display = 'none';
+            }
+        }
+
+        // 3. Закрытие окон
+        function closeWindow(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        // 4. Имитация прихода уведомления через 3 секунды после запуска
+        setTimeout(() => {
+            const notif = document.getElementById('notification-area');
+            notif.style.display = 'block';
+            
+            // Простой звук "бип" (опционально, браузеры могут блокировать авто-звук)
+            // Но мы пока сделаем только визуально
+        }, 3000);
+
+    </script>
+</body>
+</html>
